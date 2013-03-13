@@ -27,6 +27,6 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/signpost-core-1.2.1.1.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/slf4j-api-1.6.1.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/slf4j-jcl-1.6.1.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/SmartClient.jar"/>
+	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/SmartClient.jar" sourcepath="/Users/cburnett/Dropbox/Work/indivo-apps/smart_client_java/src"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
