@@ -11,6 +11,7 @@ import org.smartplatforms.client.tests.Reminder;
 
 /**
  * Servlet implementation class TestClient
+ * Basically just stealing
  */
 public class TestClient extends Reminder {
 	
