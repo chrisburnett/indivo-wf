@@ -48,11 +48,11 @@ import org.smartplatforms.client.TokenSecret;
 public class TestClient extends HttpServlet {
 	
 	/**
-	 * Store user credentials for accessing (this makes this a security bottleneck...)
+	 * Store user credentials for accessing (this makes this a security bottleneck... ideally should be stored and managed securely)
 	 */
 	private Map<String, SmartOAuthParser> userCredentials;
 	
-	
+	private String lastUserRecordID;
 	
 	String reminderHeader = "<!DOCTYPE html>\n<html><head>"
 			+ "<script src=\"http://sample-apps.smartplatforms.org/framework/smart/scripts/smart-api-client.js\">"
@@ -79,6 +79,8 @@ public class TestClient extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 	    System.out.println("in init() for Reminder");
+	    
+	    userCredentials = new HashMap<String, SmartOAuthParser>();
 	    
 	    this.sConfig = getServletConfig();
 	    
@@ -108,6 +110,8 @@ public class TestClient extends HttpServlet {
 			OutputStream resOut = res.getOutputStream();
 			resOut.write(reminderHeader.getBytes());
 			
+			SmartClient sc = new SmartClient()
+			
 			for(Entry<String, SmartOAuthParser> e : userCredentials.entrySet())
 			{
 				resOut.write(new String(e.getKey() + " : " + e.getValue() + "<br/>").getBytes());
@@ -115,7 +119,6 @@ public class TestClient extends HttpServlet {
 			
 			resOut.write(reminderFooter.getBytes());
 			
-			resOut.write(new String("Hello!").getBytes());
 			resOut.close();
 			
 		} catch (IOException ioe) {
@@ -140,7 +143,8 @@ public class TestClient extends HttpServlet {
 		TokenSecret tokenSecret = new TokenSecret(authParams);
 		
 		userCredentials.put(recordId, authParams);
-
+		lastUserRecordID = recordId;
+		
 		Map<String, GregorianCalendar> pillDates = new HashMap<String, GregorianCalendar>();
 
 		// Represent the list as an RDF graph
