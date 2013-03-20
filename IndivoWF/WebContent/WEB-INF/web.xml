@@ -23,7 +23,7 @@
     </init-param>
     <init-param>
       <param-name>serverBaseURL</param-name>
-      <param-value>http://localhost:8000</param-value>
+      <param-value>http://192.168.56.101:8000</param-value>
     </init-param>
   </servlet>
   <servlet-mapping>

@@ -42,16 +42,18 @@ import org.smartplatforms.client.SmartResponse;
 import org.smartplatforms.client.TokenSecret;
 
 /**
- * Servlet implementation class TestClient
- * Basically just stealing
+ * Servlet implementation class TestClient Basically just stealing
  */
-public class TestClient extends HttpServlet {
-	
+public class TestClient extends HttpServlet
+{
+
 	/**
-	 * Store user credentials for accessing (this makes this a security bottleneck... ideally should be stored and managed securely)
+	 * Store user credentials for accessing (this makes this a security
+	 * bottleneck... ideally should be stored and managed securely)
 	 */
 	private Map<String, SmartOAuthParser> userCredentials;
-	
+
+	private TokenSecret lastUserCredentials;
 	private String lastUserRecordID;
 	
 	String reminderHeader = "<!DOCTYPE html>\n<html><head>"
@@ -60,7 +62,7 @@ public class TestClient extends HttpServlet {
 
 	String reminderFooter = "</body></html>";
 
-        private ServletConfig sConfig = null;
+	private ServletConfig sConfig = null;
 	private DatatypeFactory dtf = null;
 
 	private String sparqlForReminders = "PREFIX dcterms:<http://purl.org/dc/terms/>\n"
@@ -75,25 +77,26 @@ public class TestClient extends HttpServlet {
 			+ "          ?fill sp:dispenseDaysSupply ?quant.\n"
 			+ "          ?fill dcterms:date ?when.\n" + "   }";
 
-
 	@Override
-	public void init() throws ServletException {
-	    System.out.println("in init() for Reminder");
-	    
-	    userCredentials = new HashMap<String, SmartOAuthParser>();
-	    
-	    this.sConfig = getServletConfig();
-	    
-	    try {
-		dtf = DatatypeFactory.newInstance();
-	    } catch (javax.xml.datatype.DatatypeConfigurationException dce) {
-		throw new ServletException(dce);
-	    }
+	public void init() throws ServletException
+	{
+		System.out.println("in init() for Reminder");
+
+		userCredentials = new HashMap<String, SmartOAuthParser>();
+
+		this.sConfig = getServletConfig();
+
+		try {
+			dtf = DatatypeFactory.newInstance();
+		} catch (javax.xml.datatype.DatatypeConfigurationException dce) {
+			throw new ServletException(dce);
+		}
 	}
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse res)
-			throws ServletException {
+			throws ServletException
+	{
 		System.out.println("in doGet() for Reminder  --  " + req.getPathInfo());
 		String pathInfo = req.getPathInfo();
 		if (pathInfo.equals("/index.html")) {
@@ -104,32 +107,50 @@ public class TestClient extends HttpServlet {
 		}
 	}
 
-	private void showUsers(HttpServletRequest req, HttpServletResponse res) throws ServletException
+	private void showUsers(HttpServletRequest req, HttpServletResponse res)
+			throws ServletException
 	{
 		try {
 			OutputStream resOut = res.getOutputStream();
 			resOut.write(reminderHeader.getBytes());
-			
-			SmartClient sc = new SmartClient()
-			
-			for(Entry<String, SmartOAuthParser> e : userCredentials.entrySet())
-			{
-				resOut.write(new String(e.getKey() + " : " + e.getValue() + "<br/>").getBytes());
+
+			for (Entry<String, SmartOAuthParser> e : userCredentials.entrySet()) {
+				resOut.write(new String(e.getKey() + " : " + e.getValue()
+						+ "<br/>").getBytes());
 			}
+			resOut.write(("LastRecord: " + this.lastUserCredentials + "<br/>").getBytes());
+
+			SmartClient client = new SmartClient(
+					sConfig.getInitParameter("consumerKey"),
+					sConfig.getInitParameter("consumerSecret"),
+					sConfig.getInitParameter("serverBaseURL")
+					//"http://192.168.56.1:8181/IndivoWF/index.html"
+					);
+					
+			resOut.write(client.get_medications(lastUserRecordID, lastUserCredentials, null).toString().getBytes());
+			
+//			resOut.write(oauth_tokens[0].getBytes());
+//			resOut.write(oauth_tokens[1].getBytes());
+//			resOut.write(oauth_tokens[2].getBytes());
+
+			//client.getAccessToken(oauth_tokens[0], oauth_tokens[1], oauth_tokens[2]);
 			
 			resOut.write(reminderFooter.getBytes());
-			
+
 			resOut.close();
-			
+
 		} catch (IOException ioe) {
 			throw new ServletException(ioe);
+		} catch (SmartClientException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
-		
-			
+
 	}
-	
+
 	private void presentReminders(HttpServletRequest req,
-			HttpServletResponse res) throws ServletException {
+			HttpServletResponse res) throws ServletException
+	{
 
 		try {
 			OutputStream resOut = res.getOutputStream();
@@ -141,30 +162,31 @@ public class TestClient extends HttpServlet {
 		SmartOAuthParser authParams = new SmartOAuthParser(req);
 		String recordId = authParams.getParam("smart_record_id");
 		TokenSecret tokenSecret = new TokenSecret(authParams);
-		
+
 		userCredentials.put(recordId, authParams);
+		lastUserCredentials = tokenSecret;
 		lastUserRecordID = recordId;
 		
 		Map<String, GregorianCalendar> pillDates = new HashMap<String, GregorianCalendar>();
 
 		// Represent the list as an RDF graph
 		try {
-            // Example of using filters and pagination parameters:
-            //
-            // Map<String,Object> params = new HashMap <String,Object> ();
-            // params.put ("limit","5");
-            // params.put ("offset", "0");
-            
-            Map<String,Object> params = null;
-        
-			SmartClient client = new SmartClient(
-							     authParams.getParam("oauth_consumer_key"),
-							     sConfig.getInitParameter("consumerSecret"),
-							     authParams.getParam("smart_container_api_base"));
+			// Example of using filters and pagination parameters:
+			//
+			// Map<String,Object> params = new HashMap <String,Object> ();
+			// params.put ("limit","5");
+			// params.put ("offset", "0");
 
-                        SmartResponse resObj = client
-					.get_medications(recordId, tokenSecret, params);
-                        RepositoryConnection meds = resObj.graph;
+			Map<String, Object> params = null;
+
+			SmartClient client = new SmartClient(
+					sConfig.getInitParameter("consumerKey"),
+					sConfig.getInitParameter("consumerSecret"),
+					sConfig.getInitParameter("serverBaseURL"));
+
+			SmartResponse resObj = client.get_medications(recordId,
+					tokenSecret, params);
+			RepositoryConnection meds = resObj.graph;
 
 			String pillWhen = null;
 			String pillQuant = null;
@@ -201,7 +223,7 @@ public class TestClient extends HttpServlet {
 
 			Iterator<String> medNames = pillDates.keySet().iterator();
 			StringBuffer retStrb = new StringBuffer();
-                        Boolean late = false;
+			Boolean late = false;
 			GregorianCalendar today = new GregorianCalendar();
 			while (medNames.hasNext()) {
 				String aMed = medNames.next();
@@ -209,10 +231,11 @@ public class TestClient extends HttpServlet {
 				if (today.after(dayFromMap)) {
 					retStrb.append("<i>LATE!</i> ");
 				}
-				String xmlFormatDate = dtf.newXMLGregorianCalendar(dayFromMap).toXMLFormat();
+				String xmlFormatDate = dtf.newXMLGregorianCalendar(dayFromMap)
+						.toXMLFormat();
 				retStrb.append(aMed + ": <b>" + xmlFormatDate.substring(0, 10)
 						+ "</b><br>");
-                                late = true;
+				late = true;
 			}
 			if (retStrb.length() == 0) {
 				retStrb.append("Up to date on all meds.");
@@ -220,7 +243,8 @@ public class TestClient extends HttpServlet {
 
 			try {
 				OutputStream resOut = res.getOutputStream();
-				if (late) resOut.write("Refills due!<br><br>".getBytes());
+				if (late)
+					resOut.write("Refills due!<br><br>".getBytes());
 				resOut.write(retStrb.toString().getBytes());
 				resOut.write(reminderFooter.getBytes());
 				resOut.close();
@@ -233,5 +257,5 @@ public class TestClient extends HttpServlet {
 			throw new ServletException(sme);
 		}
 	}
-	
+
 }
